@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>词卡 | Flash Cards</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='100%25' height='100%25' fill='%230A84FF'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,Segoe UI,Roboto,Helvetica,Arial' font-weight='700' font-size='96' fill='white'%3EA%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root { --bg: #0b0c10; --card: #15171c; --muted:#7a8495; --accent:#2f81f7; --ok:#22c55e; --danger:#ef4444; }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin:0; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji"; background: linear-gradient(180deg,#0a0c12,#0f1117 35%,#0b0c10); color:#e5e7eb; -webkit-tap-highlight-color: transparent; }
+    header { position: sticky; top: 0; backdrop-filter: saturate(180%) blur(12px); background: rgba(10,12,18,.7); border-bottom: 1px solid rgba(255,255,255,.06); z-index:10; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 14px 16px; }
+    .title { display:flex; align-items:center; gap:10px; }
+    .title h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing:.2px; }
+    .title small{ color: var(--muted); }
+    .actions { margin-left:auto; display:flex; gap:8px; }
+    .btn { border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04); color:#e5e7eb; padding:10px 14px; border-radius:14px; font-weight:600; font-size:14px; cursor:pointer; }
+    .btn:hover { border-color: rgba(255,255,255,.24); }
+    .btn.primary{ background: linear-gradient(180deg, #2f81f7, #1f6fe5); border:none; }
+    .btn.ghost{ background: transparent; }
+    .btn.danger{ background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.4); color:#fecaca; }
+    main { padding: 18px 16px 28px; }
+    .card { user-select: none; -webkit-user-select:none; background: radial-gradient(1200px 480px at 50% -20%, rgba(47,129,247,.2), transparent), var(--card); border: 1px solid rgba(255,255,255,.08); border-radius: 24px; padding: 22px; box-shadow: 0 10px 36px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04); }
+    .card h2.zh { margin: 0; font-size: 24px; line-height:1.35; font-weight: 700; letter-spacing:.2px; }
+    .card p.en { margin: 14px 0 0; font-size: 18px; color:#c7d2fe; opacity:0; transform: translateY(6px); transition: all .22s ease; }
+    .revealed .card p.en{ opacity:1; transform: none; }
+    .meta { margin-top: 12px; color: var(--muted); font-size:12px; }
+    .controls { margin-top: 14px; display:flex; gap:10px; flex-wrap: wrap; }
+    .grid { display:grid; gap:16px; grid-template-columns: 1fr; }
+    .flex { display:flex; gap:10px; flex-wrap:wrap; }
+    .divider { height:1px; background: rgba(255,255,255,.08); margin: 16px 0; }
+    .muted { color: var(--muted); }
+    .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding:2px 6px; border:1px solid rgba(255,255,255,.18); border-radius:6px; background: rgba(255,255,255,.06); }
+    .empty { text-align:center; padding: 28px 14px; color: var(--muted); border:1px dashed rgba(255,255,255,.12); border-radius:16px; }
+
+    dialog { width: min(720px, 92vw); border:none; border-radius: 18px; background: #0f1117; color:#e5e7eb; box-shadow: 0 30px 70px rgba(0,0,0,.5); }
+    dialog::backdrop{ backdrop-filter: blur(1px); background: rgba(0,0,0,.35); }
+    .form { display:grid; gap:12px; padding: 14px; }
+    .field label{ display:block; margin-bottom:6px; color:#94a3b8; font-size:13px; }
+    .field textarea, .field input{ width:100%; border-radius: 12px; padding: 12px 12px; background: #0b0c10; color:#e5e7eb; border:1px solid rgba(255,255,255,.1); font-size: 15px; }
+    .row { display:flex; gap:10px; justify-content:flex-end; padding: 0 14px 14px; }
+    .list { border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; }
+    .list header { position:sticky; top:0; background: #0b0c10; border-bottom:1px solid rgba(255,255,255,.06); }
+    table { width:100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+    .link { color:#9bbcff; text-decoration: underline; cursor: pointer; }
+
+    @media (prefers-color-scheme: light){
+      body{ background: #f3f4f6; color:#111827; }
+      header{ background: rgba(255,255,255,.7); }
+      .card{ background: white; border-color: rgba(0,0,0,.08); }
+      .muted, .meta{ color:#6b7280; }
+      .btn{ color:#111827; }
+      .btn.danger{ color:#b91c1c; border-color:#fecaca; }
+      .field textarea,.field input{ background:#fff; color:#111827; border-color: rgba(0,0,0,.12) }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap title">
+      <h1>词卡 Flash Cards</h1>
+      <small id="count">0 张</small>
+      <div class="actions">
+        <button class="btn" id="manageBtn" aria-label="管理">管理</button>
+        <button class="btn primary" id="addBtn" aria-label="新增">新增</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="cardView">
+      <div id="emptyState" class="empty" style="display:none">
+        还没有卡片。点击右上角「新增」添加第一张吧。
+      </div>
+      <div id="cardWrap" class="grid" style="display:none">
+        <div id="cardContainer" class="revealed-off">
+          <div class="card" id="card" role="button" tabindex="0" aria-pressed="false" aria-label="点击显示英文">
+            <h2 class="zh" id="zhText">——</h2>
+            <p class="en" id="enText">——</p>
+            <div class="meta" id="meta"></div>
+          </div>
+        </div>
+        <div class="controls">
+          <button class="btn" id="revealBtn">点击显示英文</button>
+          <button class="btn" id="prevBtn">上一张</button>
+          <button class="btn" id="nextBtn">下一张</button>
+          <button class="btn" id="shuffleBtn">随机</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+    <div class="muted">提示：点击卡片或「点击显示英文」即可在中文下方显示对应英文；再次点击隐藏。</div>
+  </main>
+
+  <!-- 新增/编辑对话框 -->
+  <dialog id="editDialog">
+    <form method="dialog" class="form" id="editForm">
+      <h3 id="dlgTitle" style="margin:10px 14px 0">新增卡片</h3>
+      <div class="field">
+        <label for="zhInput">中文</label>
+        <textarea id="zhInput" rows="3" placeholder="请输入中文句子" required></textarea>
+      </div>
+      <div class="field">
+        <label for="enInput">英文</label>
+        <textarea id="enInput" rows="3" placeholder="请输入对应英文" required></textarea>
+      </div>
+      <div class="row">
+        <button class="btn ghost" value="cancel">取消</button>
+        <button class="btn primary" value="ok">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 管理列表对话框 -->
+  <dialog id="manageDialog">
+    <div class="form">
+      <div class="flex" style="justify-content: space-between; align-items:center;">
+        <h3 style="margin:0">管理卡片</h3>
+        <div class="flex">
+          <button class="btn" id="importBtn">导入</button>
+          <button class="btn" id="exportBtn">导出</button>
+          <button class="btn danger" id="clearBtn">全部清空</button>
+          <button class="btn" id="closeManage">关闭</button>
+        </div>
+      </div>
+      <div class="list">
+        <table id="table">
+          <thead>
+            <tr><th style="width:48px">#</th><th>中文</th><th>英文</th><th style="width:120px">操作</th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <input id="filePicker" type="file" accept="application/json" style="display:none" />
+    </div>
+  </dialog>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    const storeKey = 'flashcards.v1';
+    const prefKey = 'flashcards.pref';
+    const state = { cards: [], index: 0, revealed: false, editId: null };
+
+    function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+    function save(){ localStorage.setItem(storeKey, JSON.stringify(state.cards)); updateCount(); }
+    function load(){ try{ const raw = localStorage.getItem(storeKey); state.cards = raw ? JSON.parse(raw) : demoCards(); }catch(e){ state.cards = demoCards(); } }
+
+    function demoCards(){
+      return [
+        { id: uid(), zh: '今天天气很好。', en: 'The weather is great today.', createdAt: Date.now() },
+        { id: uid(), zh: '请给我一杯冰美式。', en: 'Please give me an iced Americano.', createdAt: Date.now() },
+        { id: uid(), zh: '这句话是什么意思？', en: 'What does this sentence mean?', createdAt: Date.now() }
+      ];
+    }
+
+    function updateCount(){ $('#count').textContent = `${state.cards.length} 张`; }
+
+    function renderCard(){
+      const has = state.cards.length > 0;
+      $('#emptyState').style.display = has ? 'none' : 'block';
+      $('#cardWrap').style.display = has ? 'grid' : 'none';
+      if(!has) return;
+      state.index = Math.max(0, Math.min(state.index, state.cards.length - 1));
+      const c = state.cards[state.index];
+      $('#zhText').textContent = c.zh.trim();
+      $('#enText').textContent = c.en.trim();
+      $('#meta').textContent = `第 ${state.index + 1} / ${state.cards.length}`;
+      setRevealed(false);
+    }
+
+    function setRevealed(v){
+      state.revealed = v;
+      document.body.classList.toggle('revealed', v);
+      $('#revealBtn').textContent = v ? '隐藏英文' : '点击显示英文';
+      $('#card').setAttribute('aria-pressed', v ? 'true' : 'false');
+    }
+
+    function next(){ if(state.cards.length === 0) return; state.index = (state.index + 1) % state.cards.length; renderCard(); }
+    function prev(){ if(state.cards.length === 0) return; state.index = (state.index - 1 + state.cards.length) % state.cards.length; renderCard(); }
+    function shuffle(){ if(state.cards.length === 0) return; state.index = Math.floor(Math.random() * state.cards.length); renderCard(); }
+
+    function openEdit(card){
+      state.editId = card?.id || null;
+      $('#dlgTitle').textContent = state.editId ? '编辑卡片' : '新增卡片';
+      $('#zhInput').value = card?.zh || '';
+      $('#enInput').value = card?.en || '';
+      $('#editDialog').showModal();
+      setTimeout(()=> $('#zhInput').focus(), 50);
+    }
+
+    function saveEdit(){
+      const zh = $('#zhInput').value.trim();
+      const en = $('#enInput').value.trim();
+      if(!zh || !en) return;
+      if(state.editId){
+        const idx = state.cards.findIndex(x => x.id === state.editId);
+        if(idx>-1){ state.cards[idx].zh = zh; state.cards[idx].en = en; }
+      } else {
+        state.cards.push({ id: uid(), zh, en, createdAt: Date.now() });
+        state.index = state.cards.length - 1;
+      }
+      save(); renderCard();
+    }
+
+    function remove(id){
+      const idx = state.cards.findIndex(x => x.id === id);
+      if(idx>-1){ state.cards.splice(idx,1); save(); if(state.index >= state.cards.length) state.index = 0; renderCard(); fillTable(); }
+    }
+
+    function fillTable(){
+      const tbody = $('#tbody');
+      tbody.innerHTML = '';
+      state.cards.forEach((c,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(c.zh)}</td><td>${escapeHtml(c.en)}</td>
+          <td>
+            <button class='btn' data-act='edit' data-id='${c.id}'>编辑</button>
+            <button class='btn danger' data-act='del' data-id='${c.id}'>删除</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    function exportJson(){
+      const blob = new Blob([JSON.stringify(state.cards, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `cards-${new Date().toISOString().slice(0,10)}.json`; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJson(file){
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const data = JSON.parse(reader.result);
+          if(!Array.isArray(data)) throw new Error('格式不正确');
+          // normalize
+          const cleaned = data.map(x=>({ id: x.id||uid(), zh: String(x.zh||'').trim(), en: String(x.en||'').trim(), createdAt: x.createdAt||Date.now() })).filter(x=>x.zh && x.en);
+          state.cards = cleaned;
+          save(); renderCard(); fillTable();
+          alert('导入完成');
+        }catch(e){ alert('导入失败：' + e.message); }
+      };
+      reader.readAsText(file);
+    }
+
+    // Keyboard
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowRight') next();
+      else if(e.key === 'ArrowLeft') prev();
+      else if(e.key.toLowerCase() === ' ') { e.preventDefault(); setRevealed(!state.revealed); }
+    });
+
+    // Event bindings
+    $('#addBtn').onclick = () => openEdit();
+    $('#manageBtn').onclick = () => { fillTable(); $('#manageDialog').showModal(); };
+    $('#closeManage').onclick = () => $('#manageDialog').close();
+
+    $('#editForm').addEventListener('submit', (e)=>{ e.preventDefault(); });
+    $('#editDialog').addEventListener('close', () => { if($('#editDialog').returnValue === 'ok'){ saveEdit(); } });
+
+    $('#table').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      const id = btn.dataset.id; const act = btn.dataset.act;
+      const card = state.cards.find(x=>x.id===id);
+      if(act==='edit') openEdit(card);
+      if(act==='del') { if(confirm('确定删除？')) remove(id); }
+    });
+
+    $('#revealBtn').onclick = () => setRevealed(!state.revealed);
+    $('#card').onclick = () => setRevealed(!state.revealed);
+    $('#nextBtn').onclick = next;
+    $('#prevBtn').onclick = prev;
+    $('#shuffleBtn').onclick = shuffle;
+
+    $('#exportBtn').onclick = exportJson;
+    $('#importBtn').onclick = () => $('#filePicker').click();
+    $('#filePicker').onchange = (e)=>{ const f=e.target.files?.[0]; if(f) importJson(f); e.target.value=''; };
+    $('#clearBtn').onclick = () => { if(confirm('将删除全部卡片，且不可恢复。确定？')){ state.cards = []; save(); renderCard(); fillTable(); } };
+
+    // Init
+    load(); updateCount(); renderCard();
+
+    // Progressive Web App – register a tiny service worker to enable offline after first load (requires HTTPS host)
+    if('serviceWorker' in navigator){
+      const code = `self.addEventListener('install', e=>{ e.waitUntil(caches.open('fcache-v1').then(c=>c.addAll(['./']))); }); self.addEventListener('fetch', e=>{ e.respondWith(caches.match(e.request).then(r=> r || fetch(e.request))); });`;
+      const blob = new Blob([code], {type:'text/javascript'});
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).catch(()=>{});
+    }
+  </script>
+</body>
+</html>
